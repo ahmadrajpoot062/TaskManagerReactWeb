@@ -1,5 +1,15 @@
 const BASE_URL = "https://localhost:7253/api/User"; // Replace with your API base URL
 
+// Utility function to handle errors and responses
+const handleResponse = async (response) => {
+  if (!response.ok) {
+    // Log detailed error based on the response status and body
+    const errorText = await response.text();
+    throw new Error(`HTTP ${response.status}: ${errorText || 'Unknown error'}`);
+  }
+  return response.json();
+};
+
 // Create a new user
 export const createUser = async (user) => {
   try {
@@ -10,11 +20,10 @@ export const createUser = async (user) => {
       },
       body: JSON.stringify(user),
     });
-    if (!response.ok) throw new Error('Failed to create user');
-    return await response.json();
+    return await handleResponse(response);
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error('Error in createUser:', error);
+    throw new Error(`Failed to create user: ${error.message}`);
   }
 };
 
@@ -22,11 +31,10 @@ export const createUser = async (user) => {
 export const getUsers = async () => {
   try {
     const response = await fetch(`${BASE_URL}`);
-    if (!response.ok) throw new Error('Failed to fetch users');
-    return await response.json();
+    return await handleResponse(response);
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error('Error in getUsers:', error);
+    throw new Error(`Failed to fetch users: ${error.message}`);
   }
 };
 
@@ -34,11 +42,10 @@ export const getUsers = async () => {
 export const getUserById = async (id) => {
   try {
     const response = await fetch(`${BASE_URL}/${id}`);
-    if (!response.ok) throw new Error('Failed to fetch user');
-    return await response.json();
+    return await handleResponse(response);
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error(`Error in getUserById for user ID ${id}:`, error);
+    throw new Error(`Failed to fetch user with ID ${id}: ${error.message}`);
   }
 };
 
@@ -52,12 +59,14 @@ export const updateUser = async (id, updatedUser) => {
       },
       body: JSON.stringify(updatedUser),
     });
-    if (!response.ok) throw new Error('Failed to update user');
-    if (response.status === 204) return; // No content to return
-    return await response.json();
+
+    // Handle empty responses (204 No Content)
+    if (response.status === 204) return null;
+
+    return await handleResponse(response);
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error(`Error in updateUser for user ID ${id}:`, error);
+    throw new Error(`Failed to update user with ID ${id}: ${error.message}`);
   }
 };
 
@@ -67,11 +76,15 @@ export const deleteUser = async (id) => {
     const response = await fetch(`${BASE_URL}/${id}`, {
       method: 'DELETE',
     });
-    if (!response.ok) throw new Error('Failed to delete user');
-    return await response.json();
+
+    if (response.status === 204) {
+      return null; // No content to return
+    }
+
+    return await handleResponse(response);
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error(`Error in deleteUser for user ID ${id}:`, error);
+    throw new Error(`Failed to delete user with ID ${id}: ${error.message}`);
   }
 };
 
@@ -79,10 +92,9 @@ export const deleteUser = async (id) => {
 export const getUserByUsername = async (username) => {
   try {
     const response = await fetch(`${BASE_URL}/username/${username}`);
-    if (!response.ok) throw new Error(`Failed to fetch user with username: ${username}`);
-    return await response.json();
+    return await handleResponse(response);
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error(`Error in getUserByUsername for username ${username}:`, error);
+    throw new Error(`Failed to fetch user with username ${username}: ${error.message}`);
   }
 };

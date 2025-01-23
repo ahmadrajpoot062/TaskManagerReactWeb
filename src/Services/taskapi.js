@@ -1,5 +1,15 @@
 const BASE_URL = "https://localhost:7253/api/Task"; // Replace with your API base URL
 
+// Utility function to handle errors and responses
+const handleResponse = async (response) => {
+  if (!response.ok) {
+    // Log detailed error based on the response status
+    const errorText = await response.text();
+    throw new Error(`HTTP ${response.status}: ${errorText || 'Unknown error'}`);
+  }
+  return response.json();
+};
+
 // Create a new task
 export const createTask = async (task) => {
   try {
@@ -10,11 +20,10 @@ export const createTask = async (task) => {
       },
       body: JSON.stringify(task),
     });
-    if (!response.ok) throw new Error('Failed to create task');
-    return await response.json();
+    return await handleResponse(response);
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error('Error in createTask:', error);
+    throw new Error(`Failed to create task: ${error.message}`);
   }
 };
 
@@ -22,11 +31,10 @@ export const createTask = async (task) => {
 export const getTasks = async () => {
   try {
     const response = await fetch(`${BASE_URL}`);
-    if (!response.ok) throw new Error('Failed to fetch tasks');
-    return await response.json();
+    return await handleResponse(response);
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error('Error in getTasks:', error);
+    throw new Error(`Failed to fetch tasks: ${error.message}`);
   }
 };
 
@@ -34,11 +42,10 @@ export const getTasks = async () => {
 export const getTasksByUsername = async (username) => {
   try {
     const response = await fetch(`${BASE_URL}/username/${username}`);
-    if (!response.ok) throw new Error(`Failed to fetch tasks for user: ${username}`);
-    return await response.json();
+    return await handleResponse(response);
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error(`Error in getTasksByUsername for user ${username}:`, error);
+    throw new Error(`Failed to fetch tasks for user ${username}: ${error.message}`);
   }
 };
 
@@ -46,11 +53,10 @@ export const getTasksByUsername = async (username) => {
 export const getTask = async (id) => {
   try {
     const response = await fetch(`${BASE_URL}/${id}`);
-    if (!response.ok) throw new Error('Failed to fetch task');
-    return await response.json();
+    return await handleResponse(response);
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error(`Error in getTask for task ID ${id}:`, error);
+    throw new Error(`Failed to fetch task with ID ${id}: ${error.message}`);
   }
 };
 
@@ -64,12 +70,14 @@ export const updateTask = async (id, updatedTask) => {
       },
       body: JSON.stringify(updatedTask),
     });
-    if (!response.ok) throw new Error('Failed to update task');
-    if (response.status === 204) return; // No content to return
-    return await response.json();
+
+    // Handle empty responses (204 No Content)
+    if (response.status === 204) return null;
+
+    return await handleResponse(response);
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error(`Error in updateTask for task ID ${id}:`, error);
+    throw new Error(`Failed to update task with ID ${id}: ${error.message}`);
   }
 };
 
@@ -79,10 +87,14 @@ export const deleteTask = async (id) => {
     const response = await fetch(`${BASE_URL}/${id}`, {
       method: 'DELETE',
     });
-    if (!response.ok) throw new Error('Failed to delete task');
-    return await response.json();
+
+    if (response.status === 204) {
+      return null; // No content to return
+    }
+
+    return await handleResponse(response);
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error(`Error in deleteTask for task ID ${id}:`, error);
+    throw new Error(`Failed to delete task with ID ${id}: ${error.message}`);
   }
 };

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createTask } from '../Services/taskapi';
+import { FaArrowLeft, FaPlus } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 
 function CreateTask({setTaskCreated}) {
   const [formData, setFormData] = useState({
@@ -28,7 +30,7 @@ function CreateTask({setTaskCreated}) {
     };
     try {
       await createTask(taskData);
-      alert('Task created successfully!');
+      toast.success("Task Created Successfully");
       setTaskCreated(prev=>!prev);
       navigate('/tasks'); // Redirect to the tasks page
     } catch (error) {
@@ -38,9 +40,18 @@ function CreateTask({setTaskCreated}) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+    <div className="min-h-screen  bg-gradient-to-r from-green-400 to-blue-500 flex items-center justify-center p-6">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-3xl">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">Create Task</h1>
+        <div className="flex justify-between items-center mb-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="px-4 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-400 transition duration-300 flex items-center"
+          >
+            <FaArrowLeft className="mr-2" />
+            Back
+          </button>
+          <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">Create Task</h1>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
@@ -95,6 +106,7 @@ function CreateTask({setTaskCreated}) {
               type="submit"
               className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
+              <FaPlus className="mr-2" />
               Create Task
             </button>
           </div>

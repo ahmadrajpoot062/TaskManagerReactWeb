@@ -11,8 +11,13 @@ import Profile from './Components/Profile'; // Import Profile component
 import { useState, useEffect } from 'react';
 import { getTasksByUsername } from './Services/taskapi';
 import { getUserByUsername } from './Services/userapi'; // Import getUserByUsername
+import { getTasks } from './Services/taskapi';
 import { useNavigate } from 'react-router-dom';
 import api from './Services/api';
+import AdminDashboard from './Components/AdminDashBoard';
+import AllTasks from './Components/AllTasks';
+import AdminProfile from './Components/AdminProfile';
+import { ToastContainer,toast } from 'react-toastify';
 
 function App() {
   const [username, setUsername] = useState('');
@@ -22,20 +27,26 @@ function App() {
   const [user, setUser] = useState(null); // State to store user details
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ username: '', password: '' });
-
-
+  //admin usernames are here and in the ProtectedRoutes 
+  const adminUsernames = ['safee@admin'];
+  const [taskDeleted,setTaskDeleted]=useState(false);
+ 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/Auth/login', formData); // Use the api instance
-      const token = response.data.token; // Assuming the token is in response.data.token
+      const response = await api.post('/Auth/login', formData);
+      const token = response.data.token;
+      const username = formData.username;
       localStorage.setItem('token', token);
-      localStorage.setItem('username', formData.username);
-      alert("Login successful!");
-      setUsername(formData.username);
-      //console.log(formData.username);
-      navigate('/dashboard'); // Redirect to the dashboard
+      localStorage.setItem('username', username);
+      toast.success("Login Successful");
+      setUsername(username);
+      if (adminUsernames.includes(username)) {
+        navigate('/admin-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       alert(error.response?.data?.message || "Login failed.");
     }
@@ -46,25 +57,31 @@ function App() {
   };
 
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
 
   useEffect(() => {
     const fetchTasks = async () => {
+      const name = localStorage.getItem("username");
       try {
-        const name = localStorage.getItem("username");
-        const fetchedTasks = await getTasksByUsername(name);
+        const fetchedTasks =
+          name === 'safee@admin'
+            ? await getTasks()
+            : await getTasksByUsername(name);
         setTasks(fetchedTasks);
       } catch (error) {
-        setTasks([]);
         console.error('Error fetching tasks:', error);
+        setTasks([]); // Reset tasks to an empty array on error
       }
     };
-    fetchTasks();
- 
-    console.log(user);
-  }, [username, taskCreated, statusUpdated]);
-  
 
-  useEffect(()=>{
+    fetchTasks();
+  }, [username, taskCreated, statusUpdated, user, taskDeleted]);
+
+
+  useEffect(() => {
     const fetchUser = async () => {
       try {
         const name = localStorage.getItem("username");
@@ -76,7 +93,7 @@ function App() {
     };
     fetchUser();
 
-  },[username]);
+  }, [username]);
   const countTasksByStatus = (status) => {
     return tasks.filter(task => task.status === status).length;
   };
@@ -84,18 +101,22 @@ function App() {
   const completedTasksCount = countTasksByStatus(2);
   const inProgressTasksCount = countTasksByStatus(1);
   const pendingTasksCount = countTasksByStatus(0);
-
   return (
     <div>
+      <ToastContainer position="top-right" autoClose={1000} />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard completedTasksCount={completedTasksCount} inProgressTasksCount={inProgressTasksCount} pendingTasksCount={pendingTasksCount} /></ProtectedRoute>} />
-        <Route path="/login" element={<Login handleSubmit={handleSubmit}   handleChange={handleChange}/>} />
+        <Route path="/dashboard" element={<ProtectedRoute isAdminRoute={false}><Dashboard completedTasksCount={completedTasksCount} inProgressTasksCount={inProgressTasksCount} pendingTasksCount={pendingTasksCount} /></ProtectedRoute>} />
+        <Route path="/admin-dashboard" element={<ProtectedRoute isAdminRoute={true}><AdminDashboard completedTasksCount={completedTasksCount} inProgressTasksCount={inProgressTasksCount} pendingTasksCount={pendingTasksCount} /></ProtectedRoute>} />
+        <Route path="/login" element={<Login handleSubmit={handleSubmit} handleChange={handleChange} />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/create-task" element={<ProtectedRoute><CreateTask username={username} setTaskCreated={setTaskCreated} /></ProtectedRoute>} />
-        <Route path="/tasks" element={<ProtectedRoute><Tasks tasks={tasks} /></ProtectedRoute>} />
+        <Route path="/create-task" element={<ProtectedRoute isAdminRoute={false}><CreateTask username={username} setTaskCreated={setTaskCreated} /></ProtectedRoute>} />
+        <Route path="/tasks" element={<ProtectedRoute isAdminRoute={false}><Tasks tasks={tasks} setTaskDeleted={setTaskDeleted}/></ProtectedRoute>} />
         <Route path="/task/:id" element={<ProtectedRoute><TaskDetail setStatusUpdated={setStatusUpdated} /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><Profile user={user} /></ProtectedRoute>} /> {/* Add Profile route */}
+        <Route path="/profile" element={<ProtectedRoute isAdminRoute={false}><Profile user={user} handleLogout={handleLogout} /></ProtectedRoute>} />
+        <Route path="/alltasks" element={<ProtectedRoute isAdminRoute={true}><AllTasks tasks={tasks} /></ProtectedRoute>} />
+        <Route path="/admin-profile" element={<ProtectedRoute isAdminRoute={true}><AdminProfile user={user} handleLogout={handleLogout} /></ProtectedRoute>} />
+
       </Routes>
     </div>
   );

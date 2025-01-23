@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { FaArrowLeft, FaSpinner, FaCheckCircle, FaHourglassHalf } from 'react-icons/fa';
 import { getTask, updateTask } from '../Services/taskapi';
 
-function TaskDetail({ setStatusUpdated }) {
+function TaskDetail({setStatusUpdated}) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [task, setTask] = useState(null);
@@ -39,71 +40,59 @@ function TaskDetail({ setStatusUpdated }) {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-gray-700">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-700">
+        <FaSpinner className="animate-spin text-4xl" />
+        <span className="ml-4 text-xl">Loading...</span>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-600">
+        <p>{error}</p>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-3xl mx-auto mb-6 flex justify-between">
-        <button
-          onClick={() => navigate(-1)}
-          className="px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-700 transition duration-300 ml-4"
-        >
-          Go Back
-        </button>
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-300 mr-4"
-        >
-          Go To Dashboard
-        </button>
-      </div>
-      <div className="max-w-3xl w-full bg-white p-8 rounded-lg shadow-lg mx-auto">
-        <h1 className="text-4xl font-bold text-gray-900 mb-6">{task.title}</h1>
-        <p className="text-lg text-gray-700 mb-4">{task.description}</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <p className="text-gray-600">Status:</p>
-            <select
-              value={task.status}
-              onChange={handleStatusChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            >
-              <option value={0}>Pending</option>
-              <option value={1}>In Progress</option>
-              <option value={2}>Completed</option>
-            </select>
+    <div className="min-h-screen bg-gradient-to-r from-green-400 to-blue-500 p-6">
+      <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+        <div className="flex justify-between items-center mb-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="px-4 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-400 transition duration-300 flex items-center"
+          >
+            <FaArrowLeft className="mr-2" />
+            Back
+          </button>
+          <h1 className="text-3xl font-bold text-gray-900">Task Detail</h1>
+        </div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-2">{task.title}</h2>
+          <p className="text-gray-600 mb-4">{task.description}</p>
+          <div className="flex justify-between items-center mb-2">
+            <span className={`text-sm font-medium ${task.status === 0 ? 'text-yellow-500' : task.status === 1 ? 'text-blue-500' : 'text-green-500'}`}>
+              {task.status === 0 ? <FaHourglassHalf className="mr-1" /> : task.status === 1 ? <FaSpinner className="mr-1" /> : <FaCheckCircle className="mr-1" />}
+              {task.status === 0 ? 'Pending' : task.status === 1 ? 'In Progress' : 'Completed'}
+            </span>
+            <span className="text-sm text-gray-500">Priority: {task.priority}</span>
           </div>
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <p className="text-gray-600">Priority:</p>
-            <p className="text-lg font-semibold">{task.priority}</p>
-          </div>
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <p className="text-gray-600">Due Date:</p>
-            <p className="text-lg font-semibold">{new Date(task.dueDate).toLocaleDateString()}</p>
-          </div>
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <p className="text-gray-600">Progress:</p>
-            <p className="text-lg font-semibold">{task.progress}%</p>
-          </div>
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <p className="text-gray-600">Created By:</p>
-            <p className="text-lg font-semibold">{task.createdBy}</p>
-          </div>
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <p className="text-gray-600">Created At:</p>
-            <p className="text-lg font-semibold">{new Date(task.createdAt).toLocaleDateString()}</p>
-          </div>
-          {task.completedAt && (
-            <div className="bg-gray-100 p-4 rounded-lg">
-              <p className="text-gray-600">Completed At:</p>
-              <p className="text-lg font-semibold">{new Date(task.completedAt).toLocaleDateString()}</p>
-            </div>
-          )}
+          <p className="text-sm text-gray-500">Creation Date: {new Date(task.createdAt).toLocaleDateString()}</p>
+        </div>
+        <div className="mb-4">
+          <label htmlFor="status" className="block text-sm font-medium text-gray-700">Change Status</label>
+          <select
+            id="status"
+            value={task.status}
+            onChange={handleStatusChange}
+            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          >
+            <option value="0">Pending</option>
+            <option value="1">In Progress</option>
+            <option value="2">Completed</option>
+          </select>
         </div>
       </div>
     </div>
